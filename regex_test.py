@@ -14,11 +14,11 @@ group1 = [
     "send a text message on facebook messenger",
     "reply to last message on facebook messenger",
     "send text on slack",
-    "read my email"
+    "read my email",
     "read my sms message"
 ]
 # Intent: “messaging”, action: “send/reply/query”, targetName: “facebook/slack/sms/email”
-p1 = re.compile(r"(send|reply|read).*(facebook|slack|sms|email).*")
+p1 = re.compile(r"(send|reply|read).*(facebook|slack|sms|email|message).*")
 
 
 group2 = [
@@ -34,7 +34,8 @@ group2 = [
 # targetName: ”gas station / sushi place / chinese restaurant / parking lot / parking
 # garage”, targetDestination: “way home / stanford university / palo alto / 845 market
 # st”, targetReview: “over four star”
-p2 = re.compile(r'(find|search).* a (.*) (on the|in|near|with) (.*)')
+p2 = re.compile(
+    r'(find|search)( me)?( a)?( nearest)? (\w+ \w+)( (on the|in|near|with) (.*))?')
 
 
 group3 = [
@@ -47,23 +48,84 @@ group3 = [
 ]
 # Intent: “navigation”, targetName:”fish market/845 market st/sfo”,
 # targetDestination: “ ”, targetReview: “ ”
-p3 = re.compile(r'(directions|get|direct|take).* to (.*)')
+p3 = re.compile(r'(directions|get|direct|take|route).* to (.*)')
 
 
 group4 = [
     "create event to buy milk at 6am next Monday",
     "create event meeting with John at 6 p.m tomorrow",
     "create event to call home tomorrow six p.m.",
-    "what is on my calendar"
+    "what is on my calendar",
     "tell me my google calendar events"
 ]
 # Intent: “calendarEvent”, action: “create/query”, eventName:”buy milk/meeting
 # with john/call home”, eventTime: “6 am”, eventDate: “tomorrow”
+p4 = re.compile(r'(create event) to |(.*) at (\w+[ ]?[ap].?m.?) (.*)|(.*calendar.*)')
 
-p4 = re.compile(r'(create event) to |(.*) at (\w+[ ]?[ap].?m.?) (.*)|(.* calendar .*)')
+
+def handle_group1(result):
+    output = {'intent': 'messaging'}
+    output['action'] = result.group(1)
+    target_name = result.group(2)
+    if target_name == 'message':
+        target_name = 'sms'
+    output['targetName'] =  target_name
+    return output
+
+
+def handle_group2(result):
+    output = {'intent': 'poiSearch'}
+    # set target type
+    place = result.group(5)
+    if 'gas station' in place:
+        target_type = 'gas station'
+    elif 'parking' in place:
+        target_type = 'parking'
+    else:  # need more domain knowledge to clarify here
+        target_type = 'restaurant'
+    output['targetType'] = target_type
+    output['targetName'] = place
+    # only one with value
+    if result.group(6) == 'with':
+        output['targetReview'] = result.group(8)
+    else:
+        output['targetDestination'] = result.group(8)
+    return output
+
+
+def handle_group3(result):
+    output = {'intent': 'navigation'}
+    output['targetName'] = result.group(2)
+    return output
+    
+
+def handle_group4(result):
+    pass
+
+
+def test_sentence(s, patterns, methods):
+    print 'Testing sentence: "{}"'.format(s)
+    for i, pattern in patterns.iteritems():
+        res = pattern.match(s)
+        if res:
+            output = methods[i](res)
+            print 'Matching pattern {}, output is: {}'.format(i, output)
+        else:
+            print 'Not matching pattern {}'.format(i)
+    print '\n'
+
+
+def test_patterns():
+    patterns = {
+        1: p1, 2: p2, 3: p3, 4: p4
+    }
+    handle_methods = {
+        1: handle_group1, 2: handle_group2,
+        3: handle_group3, 4: handle_group4
+    }
+    for s in group1 + group2 + group3 + group4:
+        test_sentence(s, patterns, handle_methods)
 
 
 if __name__ == '__main__':
-    for sentence in group2:
-        result = p2.match(sentence)
-        print result.group()
+    test_patterns()
