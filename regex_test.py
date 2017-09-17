@@ -60,7 +60,8 @@ group4 = [
 ]
 # Intent: “calendarEvent”, action: “create/query”, eventName:”buy milk/meeting
 # with john/call home”, eventTime: “6 am”, eventDate: “tomorrow”
-p4 = re.compile(r'(create event) to |(.*) at (\w+[ ]?[ap].?m.?) (.*)|(.*calendar.*)')
+p4 = re.compile(
+    r'(create event)( to)? (.*?) (tomorrow| next Monday)?[ ]?(at )?(\b\w+[ ]?[ap].?m.?)(.*)?|(.*calendar.*)')
 
 
 def handle_group1(result):
@@ -100,7 +101,18 @@ def handle_group3(result):
     
 
 def handle_group4(result):
-    pass
+    output = {'intent': 'calendarEvent'}
+    if result.group(8):
+        output['action'] = 'query'
+    else:
+        output['action'] = 'create'
+        output['eventName'] = result.group(3)
+        if result.group(7):
+            output['eventDate'] = result.group(7)
+        else:
+            output['eventDate'] = result.group(4)
+        output['eventTime'] = result.group(6)
+    return output
 
 
 def test_sentence(s, patterns, methods):
