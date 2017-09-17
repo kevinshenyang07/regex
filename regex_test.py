@@ -61,7 +61,8 @@ group4 = [
 # Intent: “calendarEvent”, action: “create/query”, eventName:”buy milk/meeting
 # with john/call home”, eventTime: “6 am”, eventDate: “tomorrow”
 p4 = re.compile(
-    r'(create event)( to)? (.*?) (tomorrow| next Monday)?[ ]?(at )?(\b\w+[ ]?[ap].?m.?)(.*)?|(.*calendar.*)')
+    r'(create event)( to)? (.*?) (tomorrow|next Monday)?[ ]?(at )?(\b\w+[ ]?[ap].?m.?)(.*)?|(.*calendar.*)')
+# the 4th group need to be expanded to match more date options
 
 
 def handle_group1(result):
